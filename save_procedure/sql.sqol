@@ -1,0 +1,22 @@
+
+select * from employee_salary
+
+create or replace procedure append_salary(f integer) as $$ 
+begin
+	for i in 1..f
+		loop 
+			insert into employee_salary values ()
+		end loop;
+end;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE function count_() RETURNS integer as $$
+declare f int;
+begin
+  f = (select count(*) from employee_salary);
+ return f;
+end;
+$$
+LANGUAGE plpgsql;
+
+call append_salary(select (count_()));
