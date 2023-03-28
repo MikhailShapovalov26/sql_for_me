@@ -113,3 +113,24 @@ Result
 
 ![result](./img/2.2.png)
 
+## 4.
+
+Написал данную процедуру, для добавления записи в таблицу employee_salary 
+
+    create or replace procedure append_salary(a int, b int, c numeric(12,2), d date) as $$ 
+    begin
+        if d = null then
+        d = now();
+        end if;
+        insert into employee_salary 
+        values (a,b,c, d);
+    end;
+    $$ LANGUAGE plpgsql;
+
+
+    call append_salary(250777,1, 8500);
+
+Результат: ![procedure](./img/procedure.png)
+
+
+Сами sql запросы в репозитории. (содержат доп. sql скрипты которые я сохранил для себя)
