@@ -4,22 +4,27 @@ declare
    diff integer;
 begin 
 	   if  (TG_OP = 'INSERT') then 
-		   old_ = '0';
-		   diff = new.salary ;
-		   insert into hr.employee_salary_history values (new.emp_id,  old_, new.salary, diff, new.effective_from);
-		   return new;
+	      if EXISTS  (select emp_id from hr.employee_salary_history where emp_id = new.emp_id ) then
+	            old_ = (select t.salary_new  from hr.employee_salary_history t where t.emp_id = new.emp_id order by t.last_update desc limit 1);
+		        diff = new.salary - old_;
+		        insert into hr.employee_salary_history values (new.emp_id,  old_, new.salary, diff, now());
+		    else
+		        old_ = '0';
+		        diff = new.salary ;
+		        insert into hr.employee_salary_history values (new.emp_id,  old_, new.salary, diff,  now()); 
+		  end if;
 	  elseif (TG_OP = 'UPDATE') then 
 		   old_ = old.salary;
 		   diff = new.salary - old_;
-		   insert into hr.employee_salary_history values (new.emp_id,  old_, new.salary, diff, new.effective_from);
-		   return new;
-	   end if;  
+		   insert into hr.employee_salary_history values (new.emp_id,  old_, new.salary, diff,  now());
+	   end if; 
+	  return new;
 end;
 $$ LANGUAGE plpgsql;
 
 
 create OR replace trigger append
-  before insert or update on hr.employee_salary
+  after insert or update on hr.employee_salary
   FOR EACH row
   execute  function append_trigger();
   
@@ -38,3 +43,7 @@ DROP TRIGGER IF EXISTS foo on hr."position"
 
 
 drop function foo_trigger CASCADE;
+
+DELETE from hr.employee_salary where order_id = 5503
+
+DELETE from hr.employee_salary_history 

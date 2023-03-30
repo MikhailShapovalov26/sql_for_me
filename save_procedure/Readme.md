@@ -83,35 +83,35 @@ Result
     diff integer;
     begin 
         if  (TG_OP = 'INSERT') then 
-            old_ = '0';
-            diff = new.salary ;
-            insert into hr.employee_salary_history values (new.emp_id,  old_, new.salary, diff, new.effective_from);
-            return new;
+            if EXISTS  (select emp_id from hr.employee_salary_history where emp_id = new.emp_id ) then
+                    old_ = (select t.salary_new  from hr.employee_salary_history t where t.emp_id = new.emp_id order by t.last_update desc limit 1);
+                    diff = new.salary - old_;
+                    insert into hr.employee_salary_history values (new.emp_id,  old_, new.salary, diff, now());
+                else
+                    old_ = '0';
+                    diff = new.salary ;
+                    insert into hr.employee_salary_history values (new.emp_id,  old_, new.salary, diff,  now()); 
+            end if;
         elseif (TG_OP = 'UPDATE') then 
             old_ = old.salary;
             diff = new.salary - old_;
-            insert into hr.employee_salary_history values (new.emp_id,  old_, new.salary, diff, new.effective_from);
-            return new;
-        end if;  
+            insert into hr.employee_salary_history values (new.emp_id,  old_, new.salary, diff,  now());
+        end if; 
+        return new;
     end;
     $$ LANGUAGE plpgsql;
 
 далее пишем сам триггер на добавлени и обновления данных
 
     create OR replace trigger append
-    before insert or update on hr.employee_salary
+    after insert or update on hr.employee_salary
     FOR EACH row
     execute  function append_trigger();
 
-Ну и для тестирования я использовал сл sql команды
-
-    update hr.employee_salary set salary = 77000 where order_id =  5501;
-    
-    insert into hr.employee_salary values (5501, 2, 44000, '26.03.2023');
 
 Результат для тестирования
 
-![result](./img/2.2.png)
+![result](./img/3_3.png)
 
 ## 4.
 
