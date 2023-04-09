@@ -66,4 +66,44 @@
     order by  op.first_name desc
 
 ![result](./img/join_1_1.png)
+## 2.
+с помощью модуля tablefunc получите из таблицы projects базы HR таблицу с данными.
+Данный запрос вызвал определннеы сложности у меня. По итогу фильнального результата получить не удалось
+ссылка для сравнения https://letsdocode.ru/sql-main/sqlp-5-2.png
 
+    select "Год"
+        ,coalesce("Январь",0) as "Январь", coalesce("Февраль",0) as "Февраль" 
+        ,coalesce("Март",0) as "Март",     coalesce("Апрель",0) as "Апрель"  
+        ,coalesce("Май",0) as "Май",       coalesce("Июнь",0) as "Июнь",         coalesce("Июль",0) as "Июль" 
+        ,coalesce("Август",0) as "Август" ,coalesce("Сентябрь",0) as "Сентябрь", coalesce("Октябрь",0) as "Октябрь"
+        ,coalesce("Ноябрь",0) as "Ноябрь" ,coalesce("Декабрь",0) as "Декабрь",   coalesce("Итого", 0) as "Итого"
+    from crosstab
+    ($$ select *
+        from (select to_char(p.created_at, 'YYYY')::text as ye,
+            extract(month from p.created_at)::text as mon,
+            sum(p.amount) as s
+            from projects p
+            group by ye, mon
+            order by ye, mon) t  
+        $$, $$ select mont::text from (
+            select distinct extract(month from p.created_at) mont
+            from projects p 
+            order by mont)  as "text"
+            union all
+            select 'Итого'::text
+            $$ ) as cst("Год" text , "Январь" NUMERIC ,"Февраль" numeric ,"Март"numeric ,"Апрель" numeric ,"Май" numeric ,"Июнь"numeric ,"Июль"numeric 
+        ,"Август" numeric ,"Сентябрь" numeric ,"Октябрь" numeric ,"Ноябрь" numeric ,"Декабрь" numeric, "Итого" numeric);	 
+
+результат ![re](./img/crosstab.png)
+! Я ранее добавил запись в 2023 год. ![r](./img/2023.png)
+
+## 3.
+pg_stat_statements
+вкелючить
+![r](./img/pg_stat_statements_on.png)
+
+    CREATE EXTENSION pg_stat_statements;
+
+    SELECT * FROM pg_stat_statements;
+
+![re](./img/pg_stat_statements.png)
