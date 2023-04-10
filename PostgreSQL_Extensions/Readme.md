@@ -9,15 +9,26 @@
 - Поможет провести бесшовную миграцию с одной базы данных на другую или объединить несколько БД.
 - Готовые FDW (foreign-data wrappers) есть у MySQL, Redis, MongoDB, ClickHouse, Kafka и других СУБД. 
 
-Делаем отдельную схему для тестирвоания
+Делаем отдельную бд для тестирвоания
 
-    create schema test_fdw;
+    create database test;
 
-Проверяем установленные модули в моем экземпляре postgreSQL
+Создаём таблицу 
+
+    CREATE  table public.person (
+        person_id       bigserial primary key,
+        first_name      varchar(250),
+        middle_name     varchar(250),
+        last_name       varchar(250),
+        taxpayer_number varchar(40),
+        dob             date default now())
+
+Проверяем установленные модули в моем экземпляре postgreSQL на основной базе данных
 
     select *
     from pg_catalog.pg_available_extensions 
     where installed_version is not null 
+
 Вывод
 
     plpgsql	1.0	1.0	PL/pgSQL procedural language
@@ -27,39 +38,43 @@
 
     create extension postgres_fdw 
 
-Далее создаем server для настройки соединения между базами данных
+Далее создаем server для настройки соединения между базами данных на основном сервере 
 
-    create server pfdw_ 
+    create server pfdw_test
     foreign data wrapper postgres_fdw --какую обертку будем использовать
-    options (host '127.0.0.1', port '5433', dbname 'netology')
+    options (host '127.0.0.1', port '5433', dbname 'test') 
 
 Далее указываем какую учетную запись будем использовать для подключения
 
     create user mapping for postgres 
-    server pfdw_
-    options (user 'Логин', password 'Пароль тут')
+    server pfdw_test
+    options (user 'postgres', password 'example')
 
 Далее необходимо создать аналогичную таблицу, к которой мы подключимся и продублируем данные, сразу пролписываем зависимости от server схемы данных и именни таблицы.
 
-    CREATE foreign table test_fdw.out_person (
+    CREATE foreign table out_person (
         person_id       int4,
         first_name      varchar(250) ,
         middle_name     varchar(250),
         last_name       varchar(250),
         taxpayer_number varchar(40),
-        dob             date)
-    server pfdw_
-    options (schema_name 'hr', table_name 'person')
+        dob             date default now())
+    server pfdw_test
+    options (schema_name 'public', table_name 'person') 
 
-Далее проверяем в новой схеме актуальность данных
+Тут прописываем зависимости от таблицы и сервера что создали ранее 
 
-    SELECT person_id, first_name, middle_name, last_name, taxpayer_number, dob
-    FROM test_fdw.out_person;
+Далее проверяем 
 
-Далее запрос с использованием join
+    insert into  out_person values(5001,'Жека','Жека','Жека','383883532',now())
+
+![test](./img/test.png)
+
+Далее заполняем данными которые были в таблицы person
+
 
     select op.first_name, op.middle_name, op.last_name, p.pos_title, p.pos_category, p.grade 
-    from test_fdw.out_person op
+    from hr.out_person op
     join hr.employee em on em.person_id=op.person_id
     join hr."position" p on em.pos_id=p.pos_id
     where p.grade is not null
