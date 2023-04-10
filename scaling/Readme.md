@@ -67,14 +67,28 @@
 ![r](./img/inventory..png) ![r](./img/inventory._1.png) ![r](./img/inventory._2.png)
 
 ## 2.
+Создаём таблицы на отдельном сервере
 
-Подключаем модуль
+    create TABLE public.inventory_sh_1 (
+        inventory_id int NOT NULL,
+        film_id int2 NOT NULL,
+        store_id int2 NOT null check(store_id=1),
+        last_update timestamp NOT NULL DEFAULT now()
+    );
+    CREATE TABLE public.inventory_sh_2 (
+        inventory_id int NOT NULL,
+        film_id int2 NOT NULL,
+        store_id int2 NOT null check(store_id=2),
+        last_update timestamp NOT NULL DEFAULT now()
+    );
+
+Подключаем модуль на основной бд 
 
     CREATE EXTENSION postgres_fdw;
  
  Создаем сервер для покдлючения к нашей базе данных
 
-    CREATE SERVER news_1 FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host '127.0.0.1', dbname 'postgres', port '5433'); --extension
+    CREATE SERVER news_1 FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host '127.0.0.1', dbname 'test_fdw', port '5433'); --extension
  
  Вдруг ошибка в строке подключения -)
 
@@ -87,7 +101,7 @@ CREATE USER MAPPING определяет сопоставление пользо
 Далее создаём 2 таблицы с указанием сервера для подключения к нашим таблицам
 
     CREATE FOREIGN TABLE public.inventory_sh_1 (
-        inventory_id serial4 NOT NULL,
+        inventory_id int NOT NULL,
         film_id int2 NOT NULL,
         store_id int2 NOT NULL,
         last_update timestamp NOT NULL DEFAULT now()
@@ -99,7 +113,7 @@ CREATE USER MAPPING определяет сопоставление пользо
 Вторая таблица 
 
     CREATE FOREIGN TABLE public.inventory_sh_2 (
-        inventory_id serial4 NOT NULL,
+        inventory_id int NOT NULL,
         film_id int2 NOT NULL,
         store_id int2 NOT NULL,
         last_update timestamp NOT NULL DEFAULT now()
