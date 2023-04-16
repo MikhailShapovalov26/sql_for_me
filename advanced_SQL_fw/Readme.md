@@ -191,12 +191,12 @@
 #### 14. Реализовать функцию по получению статистики о заявках на курьера
 
 
-select ac.id as account_id, ac."name" as account, count(cou.user_id) as count_courier
-,count(case when cou.status = 'Выполнено' then 1 else null end) as count_complete
-,count(case when cou.status = 'Отменен' then 1 else null end) as count_canceled
-,count(cou.from_place) as count_where_place
-,count(cou.contact_id) as count_contact
-,array_agg(distinct cou.user_id) filter (where cou.status = 'Отменен') as cansel_user_array	
-from public.account as ac
-join courier as cou on ac.id = cou.account_id
-group by ac.id
+    select ac.id as account_id, ac."name" as account, count(cou.user_id) as count_courier
+    ,count(case when cou.status = 'Выполнено' then 1 else null end) as count_complete
+    ,count(case when cou.status = 'Отменен' then 1 else null end) as count_canceled
+    ,count(cou.from_place) as count_where_place
+    ,count(cou.contact_id) as count_contact
+    ,array_agg(distinct cou.user_id) filter (where cou.status = 'Отменен') as cansel_user_array	
+    from public.account as ac
+    join courier as cou on ac.id = cou.account_id
+    group by ac.id
