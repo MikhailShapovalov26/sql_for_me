@@ -3,7 +3,8 @@
 
 Создаём схему
 
-    create schema public;
+    CREATE ROLE netocourier NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'NetoSQL2022';
+    GRANT ALL ON SCHEMA public TO netocourier;
 
 Подлкючаем модуль для генерации uuid-ossp
 
@@ -155,7 +156,7 @@
 
 #### 11. Функция получения списка сотрудников компании  get_users(). user --фамилия и имя сотрудника через пробел  Сотрудник должен быть действующим! Сортировка должна быть по фамилии сотрудника.
 
-    create or replace function get_users() RETURNS table(user text) 
+    create or replace function get_users() RETURNS table(user_ text) 
     as $$
     begin 
         return query select (u.last_name || ' ' || u.first_name)::text
@@ -191,12 +192,31 @@
 #### 14. Реализовать функцию по получению статистики о заявках на курьера
 
 
+    create view courier_statistic as
     select ac.id as account_id, ac."name" as account, count(cou.user_id) as count_courier
     ,count(case when cou.status = 'Выполнено' then 1 else null end) as count_complete
     ,count(case when cou.status = 'Отменен' then 1 else null end) as count_canceled
     ,count(cou.from_place) as count_where_place
     ,count(cou.contact_id) as count_contact
-    ,array_agg(distinct cou.user_id) filter (where cou.status = 'Отменен') as cansel_user_array	
+    ,array_agg(distinct cou.user_id) filter (where cou.status = 'Отменен') as cansel_user_array,
+    (sum(
+    case
+        when TO_CHAR(cou.created_date, 'MM-YYYY')=TO_CHAR(now(), 'MM-YYYY')
+        then 1
+        else 
+        0
+        end
+        )/ nullif (
+        sum (
+        case 
+            when TO_CHAR(cou.created_date, 'MM-YYYY')=TO_CHAR(now()- interval '1 months', 'MM-YYYY')
+            then 1
+            else
+            0
+            end
+        ),0
+        )
+    )* 100 as s
     from public.account as ac
     join courier as cou on ac.id = cou.account_id
-    group by ac.id
+    group by ac.id;
