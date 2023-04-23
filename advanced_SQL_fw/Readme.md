@@ -192,31 +192,34 @@
 #### 14. Реализовать функцию по получению статистики о заявках на курьера
 
 
-    create view courier_statistic as
-    select ac.id as account_id, ac."name" as account, count(cou.user_id) as count_courier
-    ,count(case when cou.status = 'Выполнено' then 1 else null end) as count_complete
-    ,count(case when cou.status = 'Отменен' then 1 else null end) as count_canceled
-    ,count(cou.from_place) as count_where_place
-    ,count(cou.contact_id) as count_contact
-    ,array_agg(distinct cou.user_id) filter (where cou.status = 'Отменен') as cansel_user_array,
-    (sum(
-    case
-        when TO_CHAR(cou.created_date, 'MM-YYYY')=TO_CHAR(now(), 'MM-YYYY')
-        then 1
-        else 
-        0
-        end
-        )/ nullif (
-        sum (
-        case 
-            when TO_CHAR(cou.created_date, 'MM-YYYY')=TO_CHAR(now()- interval '1 months', 'MM-YYYY')
-            then 1
-            else
-            0
-            end
-        ),0
-        )
-    )* 100 as s
-    from public.account as ac
-    join courier as cou on ac.id = cou.account_id
-    group by ac.id;
+-- public.courier_statistic source
+
+    CREATE OR REPLACE VIEW public.courier_statistic
+    AS SELECT ac.id AS account_id,
+        ac.name AS account,
+        count(cou.user_id) AS count_courier,
+        count(
+            CASE
+                WHEN cou.status = 'Выполнено'::status_type THEN 1
+                ELSE NULL::integer
+            END) AS count_complete,
+        count(
+            CASE
+                WHEN cou.status = 'Отменен'::status_type THEN 1
+                ELSE NULL::integer
+            END) AS count_canceled,
+        sum(
+            CASE
+                WHEN to_char(cou.created_date::timestamp with time zone, 'MM-YYYY'::text) = to_char(now(), 'MM-YYYY'::text) THEN 1
+                ELSE 0
+            END) / NULLIF(sum(
+            CASE
+                WHEN to_char(cou.created_date::timestamp with time zone, 'MM-YYYY'::text) = to_char(now() - '1 mon'::interval, 'MM-YYYY'::text) THEN 1
+                ELSE 0
+            END), 0) * 100 AS percent_relative_prev_month,
+        count(cou.from_place) AS count_where_place,
+        count(cou.contact_id) AS count_contact,
+        array_agg(DISTINCT cou.user_id) FILTER (WHERE cou.status = 'Отменен'::status_type) AS cansel_user_array
+    FROM account ac
+        JOIN courier cou ON ac.id = cou.account_id
+    GROUP BY ac.id;
