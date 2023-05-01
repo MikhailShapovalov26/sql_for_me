@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  databases:
+    build: .
+    container_name: pos
+    hostname: pos
+    ports:
+      - 5432:5432
+      - 6379:6379
+    # entrypoint: bash /docker-entrypoint-initdb.d/init.sh 
+    
