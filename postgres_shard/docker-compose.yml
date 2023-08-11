@@ -1,0 +1,46 @@
+version: "3.3"
+
+services:
+
+ postgres:
+    image: postgres:13
+    restart: always
+    hostname: postgresdb
+    container_name: post
+    volumes:
+          - db:/var/lib/postgres/data:rw
+    environment:
+          POSTGRES_DB: test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          PGDATA: /var/lib/postgres/data/pgdata_1
+    ports:
+         - 5432:5432
+ 
+ postgres_2:
+    image: postgres:13
+    restart: always
+    hostname: postgresdb_2
+    container_name: post_2
+    volumes:
+          - db:/var/lib/postgres/data:rw
+    environment:
+          POSTGRES_DB: test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          PGDATA: /var/lib/postgres/data/pgdata_2
+ postgres_3:
+    image: postgres:13
+    restart: always
+    hostname: postgresdb_3
+    container_name: post_3
+    volumes:
+          - db:/var/lib/postgres/data:rw
+    environment:
+          POSTGRES_DB: test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          PGDATA: /var/lib/postgres/data/pgdata_3
+
+volumes:
+   db: 
